@@ -1,0 +1,2 @@
+class LockExist(Exception):
+    pass

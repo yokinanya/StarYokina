@@ -1,0 +1,11 @@
+[project]
+name = "StarYokina"
+version = "0.1.1"
+description = "StarYokina"
+readme = "README.md"
+requires-python = ">=3.8, <4.0"
+
+[tool.nonebot]
+plugins = []
+plugin_dirs = ["hoshimiya/plugins", "src/plugins"]
+builtin_plugins = []
