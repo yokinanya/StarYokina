@@ -49,7 +49,7 @@ class wifeRecord:
             self._wife_id = data[0][1]
             self._times = data[0][2]
             self.date = data[0][3]
-        return self.qid
+            return self.qid
 
     def get_allwife(self) -> tuple:
         db = SQLiteDB(plugin_name="today_wife")
@@ -73,7 +73,7 @@ class wifeRecord:
             f"SELECT * FROM {"group_" + self.gid} WHERE date=?", (self.date,)
         )
         if not data:
-            self.reset
+            self.reset()
             return False
         db.close()
         return True
@@ -83,25 +83,23 @@ class wifeRecord:
         db.delete_data("group_" + self.gid)
         db.close()
 
-    def update(self) -> None:
+    def save(self) -> None:
         db = SQLiteDB(plugin_name="today_wife")
-        data = {
-            "wife_id": self._wife_id,
-            "times": self._times,
-            "date": self.date,
-        }
-        db.update_data("group_" + self.gid, data, f"qid={self.qid}")
-        db.close()
-
-    def save(self):
-        db = SQLiteDB(plugin_name="today_wife")
-        data = {
-            "qid": self.qid,
-            "wife_id": self._wife_id,
-            "times": self._times,
-            "date": self.date,
-        }
-        db.insert_data("group_" + self.gid, data)
+        try:
+            data = {
+                "qid": self.qid,
+                "wife_id": self._wife_id,
+                "times": self._times,
+                "date": self.date,
+            }
+            db.insert_data("group_" + self.gid, data)
+        except sqlite3.IntegrityError:
+            data = {
+                "wife_id": self._wife_id,
+                "times": self._times,
+                "date": self.date,
+            }
+            db.update_data("group_" + self.gid, data, f"qid={self.qid}")
         db.close()
 
     @property

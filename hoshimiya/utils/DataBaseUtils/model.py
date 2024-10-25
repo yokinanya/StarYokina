@@ -39,7 +39,7 @@ class SQLiteDB(DatabaseConfig):
         self.cursor.execute(sql, values)
         self.conn.commit()
 
-    def execute(self, query: str, params=None) -> tuple:
+    def execute(self, query: str, params=None) -> list[tuple]:
         # 查询数据
         if params is None:
             self.cursor.execute(query)

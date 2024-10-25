@@ -98,19 +98,19 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
 
     grecord = wifeRecord(gid, qid)
     # 如果不存在今天的记录，清空本群记录字典，并添加今天的记录，保存标记置为真
-    if grecord.check_date() is False:
-        grecord.reset()
-
-    if grecord.get_bewife():
+    grecord.check_date()
+    bewife_id = grecord.get_bewife()
+    _wife_id = grecord.get_wife()
+    if bewife_id:
         # 如果用户已经是群友的老婆
         is_first = False
         be_wiifu = True
-        wife_id = grecord.get_bewife()
-    elif grecord.get_wife():
+        wife_id = bewife_id
+    elif _wife_id:
         # 如果用户已经有老婆记录
         is_first = False
         be_wiifu = False
-        wife_id = grecord.get_bewife()
+        wife_id = _wife_id
     else:
         # 如果用户在今天无老婆记录，随机从群友中抓取一位作为老婆
         all_member = await bot.get_group_member_list(group_id=gid)
@@ -134,7 +134,9 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
     grecord.save()
 
     try:
-        member_info = await bot.get_group_member_info(group_id=gid, user_id=wife_id)
+        member_info = await bot.get_group_member_info(
+            group_id=int(gid), user_id=wife_id
+        )
     except ActionFailed:
         # 群员已经退群情况
         member_info = {}
@@ -169,6 +171,7 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
 
     if grecord.get_bewife():
         # 如果用户已经是群友的老婆
+        new_waifu_id = grecord.get_bewife()
         be_wiifu = True
     elif grecord.get_wife() is None:
         await matcher.finish("换老婆前请先娶个老婆哦，渣男", at_sender=True)
@@ -197,11 +200,11 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
 
     grecord.wife_id = new_waifu_id
     grecord.times = grecord.times + 1
-    grecord.update()
+    grecord.save()
 
     try:
         member_info = await bot.get_group_member_info(
-            group_id=gid, user_id=new_waifu_id
+            group_id=int(gid), user_id=new_waifu_id
         )
     except ActionFailed:
         # 群员已经退群情况
