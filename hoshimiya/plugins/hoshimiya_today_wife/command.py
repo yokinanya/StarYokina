@@ -1,3 +1,4 @@
+import datetime
 import random
 
 from nonebot import get_driver, on_command, on_regex
@@ -74,7 +75,8 @@ async def _(matcher: Matcher, event: GroupMessageEvent, cmd: Message = RawComman
 async def _(matcher: Matcher, event: GroupMessageEvent):
     gid = str(event.group_id)
     qid = str(event.user_id)
-    grecord = wifeRecord(gid, qid)
+    today = str(datetime.date.today())
+    grecord = wifeRecord(gid, qid, date=today)
     grecord.reset()
     await matcher.finish("今日老婆已刷新！")
 
@@ -95,8 +97,9 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
     gconfig.getConfig()
     is_first: bool  # 是否已经存在老婆标记
     wife_id: int  # 老婆id
+    today = str(datetime.date.today())
 
-    grecord = wifeRecord(gid, qid)
+    grecord = wifeRecord(gid, qid, date=today)
     # 如果不存在今天的记录，清空本群记录字典，并添加今天的记录，保存标记置为真
     grecord.check_date()
     bewife_id = grecord.get_bewife()
@@ -164,8 +167,8 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
     allow_change_waifu = gconfig.allow_change_wife
 
     be_wiifu = False
-
-    grecord = wifeRecord(gid, qid)
+    today = str(datetime.date.today())
+    grecord = wifeRecord(gid, qid, date=today)
     # 如果不存在今天的记录，清空本群记录字典，并添加今天的记录，保存标记置为真
     grecord.check_date()
 

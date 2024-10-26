@@ -19,7 +19,7 @@ class wifeRecord:
         self.qid = qid
         self._wife_id = wife_id
         self._times = times
-        self.date = date
+        self._date = date
 
     def get_wife(self) -> Optional[int]:
         db = SQLiteDB(plugin_name="today_wife")
@@ -48,7 +48,7 @@ class wifeRecord:
             self.qid = data[0][0]
             self._wife_id = data[0][1]
             self._times = data[0][2]
-            self.date = data[0][3]
+            self._date = data[0][3]
             return self.qid
 
     def get_allwife(self) -> tuple:
@@ -70,7 +70,7 @@ class wifeRecord:
         }
         db.create_table(data_model)
         data = db.execute(
-            f"SELECT * FROM {"group_" + self.gid} WHERE date=?", (self.date,)
+            f"SELECT * FROM {"group_" + self.gid} WHERE date=?", (self._date,)
         )
         if not data:
             self.reset()
@@ -90,14 +90,14 @@ class wifeRecord:
                 "qid": self.qid,
                 "wife_id": self._wife_id,
                 "times": self._times,
-                "date": self.date,
+                "date": self._date,
             }
             db.insert_data("group_" + self.gid, data)
         except sqlite3.IntegrityError:
             data = {
                 "wife_id": self._wife_id,
                 "times": self._times,
-                "date": self.date,
+                "date": self._date,
             }
             db.update_data("group_" + self.gid, data, f"qid={self.qid}")
         db.close()
