@@ -109,7 +109,7 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
         is_first = False
         be_wiifu = True
         wife_id = bewife_id
-    elif _wife_id:
+    elif _wife_id or _wife_id == 0:
         # 如果用户已经有老婆记录
         is_first = False
         be_wiifu = False

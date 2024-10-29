@@ -30,10 +30,10 @@ class wifeRecord:
         if not data:
             return None
         else:
-            self.qid = data[0][0]
-            self._wife_id = data[0][1]
-            self._times = data[0][2]
-            self.date = data[0][3]
+            self.qid = str(data[0][0])
+            self._wife_id = int(data[0][1])
+            self._times = int(data[0][2])
+            self.date = str(data[0][3])
         return self._wife_id
 
     def get_bewife(self) -> Optional[int]:
