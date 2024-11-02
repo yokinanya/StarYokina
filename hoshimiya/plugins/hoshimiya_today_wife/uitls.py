@@ -10,6 +10,10 @@ async def construct_change_waifu_msg(
     limit_times: int,
     be_wiifu: bool,
 ) -> Message:
+    if new_waifu_id == 0:
+        return Message(f"\n渣男，你今天没老婆了！")
+    member_name = member_info.get("card") or member_info.get("nickname") or new_waifu_id
+    img = await download_avatar(str(new_waifu_id))
     if be_wiifu:
         return (
             MessageSegment.text(f"\n你今天已经被她娶走了哦~")
@@ -18,10 +22,6 @@ async def construct_change_waifu_msg(
                 f"{member_name}({new_waifu_id})\n乖乖的待在她身边不要乱跑哦~"
             )
         )
-    if new_waifu_id == 0:
-        return Message(f"\n渣男，你今天没老婆了！")
-    member_name = member_info.get("card") or member_info.get("nickname") or new_waifu_id
-    img = await download_avatar(str(new_waifu_id))
     if new_waifu_id == bot_id:
         return MessageSegment.text(
             f"\n你今天的群友老婆是我哦~"
