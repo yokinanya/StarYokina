@@ -1,4 +1,4 @@
-import asyncio
+import random
 import time
 
 from hoshimiya.utils.Onebotv11Utils import AtSB, download_avatar
@@ -9,8 +9,6 @@ from nonebot.adapters.onebot.v11.message import Message, MessageSegment
 from nonebot.adapters.onebot.v11.permission import GROUP, PRIVATE_FRIEND
 from nonebot.matcher import Matcher
 from nonebot.params import ArgStr, CommandArg
-from nonebot.permission import SUPERUSER
-from nonebot.rule import to_me
 from nonebot.typing import T_State
 
 from .config import hoshimiya_feedback_config
@@ -18,19 +16,8 @@ from .utils import ReverseGif, ReverseGifLock
 
 superusers = get_driver().config.superusers
 su = list(superusers)[0]
-notice_group_mode = hoshimiya_feedback_config.notice_group_mode
-group_whitelist = hoshimiya_feedback_config.notice_group_whitelist
-group_blacklist = hoshimiya_feedback_config.notice_group_blacklist
+
 feedback_cooldown = hoshimiya_feedback_config.feedback_cooldown
-
-
-def notice_verify(gid: int) -> bool:
-    if notice_group_mode == "whitelist":
-        return True if gid in group_whitelist else False
-    elif notice_group_mode == "blacklist":
-        return False if gid in group_blacklist else True
-    else:
-        return False
 
 
 LAST_SEND_TIME: int = 0
@@ -74,43 +61,9 @@ async def handle_send_feedback(
     await matcher.finish("消息发送成功")
 
 
-notice = on_command(
-    "notice",
-    aliases={"通知"},
-    permission=SUPERUSER,
-    priority=20,
-    block=True,
-    rule=to_me(),
-)
-
-
-@notice.handle()
-async def handle_notice(state: T_State, cmd_arg: Message = CommandArg()):
-    message = cmd_arg.extract_plain_text().strip()
-    if message:
-        state.update({"message": message})
-
-
-@notice.got("message", prompt="请输入需要发送的内容：")
-async def handle_send_feedback(
-    bot: Onebotv11Bot,
-    matcher: Matcher,
-    message: str = ArgStr("message"),
-):
-    group_list = await bot.get_group_list()
-    for group in group_list:
-        if notice_verify(group["group_id"]) is True:
-            bot.send_group_msg(group_id=group["group_id"], message=message)
-            await asyncio.sleep(5)
-    await matcher.finish("通知发送成功")
-
-
-avatar = on_command(
+@on_command(
     "avatar", aliases={"头像"}, permission=GROUP, priority=20, block=True
-)
-
-
-@avatar.handle()
+).handle()
 async def handle_download_avatar(
     matcher: Matcher,
     event: GroupMessageEvent,
@@ -131,12 +84,13 @@ async def handle_download_avatar(
             await matcher.finish("已完成所有头像的获取")
 
 
-reverse_gif = on_command(
-    "reversegif", aliases={"倒放"}, permission=GROUP, priority=20, block=True
-)
-
-
-@reverse_gif.handle()
+@on_command(
+    "reversegif",
+    aliases={"倒放"},
+    permission=GROUP,
+    priority=20,
+    block=True,
+).handle()
 async def handle_reverse_gif(
     matcher: Matcher,
     event: GroupMessageEvent,
@@ -173,3 +127,27 @@ async def handle_reverse_gif(
     except Exception as e:
         logger.error(f"ReverseGif | 图像处理失败, {e}")
         await matcher.finish("图像处理失败QAQ, 发生了意外的错误, 请稍后再试")
+
+
+@on_command(
+    cmd="rollone",
+    permission=GROUP,
+    priority=20,
+    block=True,
+).handle()
+async def _(
+    bot: Onebotv11Bot,
+    matcher: Matcher,
+    event: GroupMessageEvent,
+    cmd_arg: Message = CommandArg(),
+):
+    all_member: list[dict] = await bot.get_group_member_list(group_id=event.group_id)
+    roll_num = cmd_arg.extract_plain_text().strip()
+    roll_num = int(roll_num) if roll_num.isdigit() else 1
+    result = random.sample(all_member, roll_num)
+    roll_result = ""
+    for member in result:
+        card = member["card"] if member["card"] is None else member["nickname"]
+        uin = member["user_id"]
+        roll_result += f"\n{card} ({uin})"
+    await matcher.send(f"随机抽取{roll_num}人：\n" + roll_result)

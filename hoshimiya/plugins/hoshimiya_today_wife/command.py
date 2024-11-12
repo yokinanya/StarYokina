@@ -2,6 +2,7 @@ import datetime
 import random
 
 from nonebot import get_driver, on_command, on_regex
+from nonebot.adapters.onebot.v11 import Message, MessageSegment
 from nonebot.adapters.onebot.v11 import GROUP, ActionFailed
 from nonebot.adapters.onebot.v11.bot import Bot
 from nonebot.adapters.onebot.v11.event import GroupMessageEvent
@@ -91,7 +92,7 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
     gid = str(event.group_id)
     qid = str(event.user_id)
     if qid in ["1099332511", "3872394754"]:
-        await matcher.finish("请专一的对待自己的老婆哦", at_sender=True)
+        await matcher.finish("你已经有老婆了，要好好对待她哦~", at_sender=True)
 
     gconfig = wifeSettings(gid)
     gconfig.getConfig()
@@ -159,8 +160,7 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
     gid = str(event.group_id)
     qid = str(event.user_id)
     if qid in ["1099332511", "3872394754"]:
-        await matcher.finish("请专一的对待自己的老婆哦", at_sender=True)
-
+        await matcher.finish("你已经有老婆了，要好好对待她哦~", at_sender=True)
     gconfig = wifeSettings(gid)
     gconfig.getConfig()
     limit_times = gconfig.limit_times

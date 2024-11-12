@@ -1,4 +1,5 @@
 import sqlite3
+from typing import Optional
 from dbutils.persistent_db import PersistentDB
 from .data import DatabaseConfig
 
@@ -41,7 +42,7 @@ class SQLiteDB(DatabaseConfig):
         self.cursor.execute(sql, values)
         self.conn.commit()
 
-    def execute(self, query: str, params=None) -> list[tuple]:
+    def execute(self, query: str, params: Optional[tuple] = None) -> list[tuple]:
         """查询数据"""
         if params is None:
             self.cursor.execute(query)
@@ -60,6 +61,57 @@ class SQLiteDB(DatabaseConfig):
         self.conn.close()
 
 
+class SettingsDB(SQLiteDB):
+    def __init__(self, gid: int, node: str, value: str) -> None:
+        super().__init__("settings")
+        self._gid = gid
+        self._node = node
+        self._value = value
+        data_model = {
+            "table_name": "settings",
+            "columns": [
+                "id INTEGER PRIMARY KEY AUTOINCREMENT" "gid INTEGER NOT NULL",
+                "node TEXT NOT NULL",
+                "value TEXT NOT NULL",
+            ],
+        }
+        self.create_table(data_model)
+
+    @property
+    def node(self) -> str:
+        return self._node
+
+    @node.setter
+    def node(self, node) -> None:
+        self._node = node
+
+    @property
+    def value(self) -> str:
+        return self._value
+
+    @value.setter
+    def value(self, value) -> None:
+        self._value = value
+
+    def set(self, value) -> None:
+        try:
+            self.insert_data(
+                "settings", {"gid": self._gid, "node": self._node, "value": value}
+            )
+        except:
+            self.update_data(
+                "settings",
+                {"value": value},
+                f"gid = {self._gid} AND node = {self._node}",
+            )
+
+    def get(self) -> list[tuple]:
+        return self.execute(
+            f"SELECT value FROM settings WHERE gid=? AND node=?",
+            (self._gid, self._node),
+        )
+
+
 # 使用示例
 # db = SQLiteDB("my_database.db")
 
@@ -74,6 +126,9 @@ class SQLiteDB(DatabaseConfig):
 
 # 插入数据
 # db.insert_data("users", {"name": "Alice", "age": 30})
+
+# 更新数据
+# db.update_data("users",{"name": "Alice", "age": 30}, "id=114514")
 
 # 清空表数据(不会重置自增)
 # db.delete_data(users)
