@@ -5,7 +5,7 @@ from nonebot.adapters.onebot.v11 import Bot
 
 
 @on_command("debug", permission=GROUP, priority=20, block=False).handle()
-async def _(bot: Bot, event: OneBotV11MessageEvent):
+async def _(event: OneBotV11MessageEvent):
     if event.reply:
         original_reply_message = event.reply.message
         logger.info(original_reply_message)
