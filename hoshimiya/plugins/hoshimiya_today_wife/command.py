@@ -2,7 +2,7 @@ import datetime
 import random
 
 from nonebot import get_driver, on_command, on_regex
-from nonebot.adapters.onebot.v11 import Message, MessageSegment
+from nonebot.adapters.onebot.v11 import Message
 from nonebot.adapters.onebot.v11 import GROUP, ActionFailed
 from nonebot.adapters.onebot.v11.bot import Bot
 from nonebot.adapters.onebot.v11.event import GroupMessageEvent
@@ -134,8 +134,8 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
         be_wiifu = False
         grecord.wife_id = wife_id
         grecord.times = 0
-
-    grecord.save()
+    if be_wiifu is False:
+        grecord.save()
 
     try:
         member_info = await bot.get_group_member_info(
@@ -172,18 +172,21 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
     # 如果不存在今天的记录，清空本群记录字典，并添加今天的记录，保存标记置为真
     grecord.check_date()
 
-    if grecord.get_bewife():
-        # 如果用户已经是群友的老婆
-        new_waifu_id = grecord.get_bewife()
-        be_wiifu = True
-    elif grecord.get_wife() is None:
+    bewife_id = grecord.get_bewife()
+    _wife_id = grecord.get_wife()
+
+    if _wife_id is None:
         await matcher.finish("换老婆前请先娶个老婆哦，渣男", at_sender=True)
     if not allow_change_waifu:
         await matcher.finish("请专一的对待自己的老婆哦", at_sender=True)
 
-    old_waifu_id = grecord.get_wife()
+    old_waifu_id = _wife_id
     old_times = grecord.times
-    if old_times >= limit_times or old_waifu_id == int(bot.self_id):
+    if bewife_id:
+        # 如果用户已经是群友的老婆
+        new_waifu_id = bewife_id
+        be_wiifu = True
+    elif old_times >= limit_times or old_waifu_id == int(bot.self_id):
         new_waifu_id = 0
         old_times = limit_times
     else:
@@ -203,7 +206,8 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
 
     grecord.wife_id = new_waifu_id
     grecord.times = grecord.times + 1
-    grecord.save()
+    if be_wiifu is False:
+        grecord.save()
 
     try:
         member_info = await bot.get_group_member_info(

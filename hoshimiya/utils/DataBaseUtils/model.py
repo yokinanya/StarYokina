@@ -70,7 +70,8 @@ class SettingsDB(SQLiteDB):
         data_model = {
             "table_name": "settings",
             "columns": [
-                "id INTEGER PRIMARY KEY AUTOINCREMENT" "gid INTEGER NOT NULL",
+                "id INTEGER PRIMARY KEY AUTOINCREMENT",
+                "gid INTEGER NOT NULL",
                 "node TEXT NOT NULL",
                 "value TEXT NOT NULL",
             ],
@@ -118,7 +119,7 @@ class SettingsDB(SQLiteDB):
 # 定义一个表模型
 # user_model = {
 #     "table_name": "users",
-#     "columns": ["id INTEGER PRIMARY KEY", "name TEXT", "age INTEGER"],
+#     "columns": ["id INTEGER PRIMARY KEY AUTOINCREMENT", "name TEXT", "age INTEGER"],
 # }
 
 # 创建表

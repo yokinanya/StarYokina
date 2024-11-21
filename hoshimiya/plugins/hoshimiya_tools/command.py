@@ -1,5 +1,5 @@
-import random
 import time
+import httpx
 
 from hoshimiya.utils.Onebotv11Utils import AtSB, download_avatar
 from nonebot import get_driver, logger, on_command
@@ -94,7 +94,6 @@ async def handle_download_avatar(
 async def handle_reverse_gif(
     matcher: Matcher,
     event: GroupMessageEvent,
-    state: T_State,
 ) -> None:
     msg_images = None
     if ReverseGifLock.locker("status") is True:
@@ -108,18 +107,14 @@ async def handle_reverse_gif(
         if seg.type == "image":
             msg_images = str(seg.data["url"]).replace("https://", "http://")
 
-    if msg_images and not state.get("source_images"):
-        state.update({"source_images": msg_images})
-    source_images: str = state.get("source_images")
-
     # 没有获取到图像，请求输入
-    if not source_images:
-        await matcher.reject_arg("source_image", "请发送你想要倒放的GIF图片:")
+    if not msg_images:
+        await matcher.reject("请发送你想要倒放的GIF图片:")
 
     # 处理倒放
     try:
         await matcher.send("图像处理中，这可能需要几分钟")
-        source_image = await ReverseGif(url=source_images)
+        source_image = await ReverseGif(url=msg_images)
         if not source_image is None:
             await matcher.send(MessageSegment.image(source_image))
         else:
@@ -130,24 +125,35 @@ async def handle_reverse_gif(
 
 
 @on_command(
-    cmd="rollone",
+    cmd="save",
+    aliases={"保存"},
     permission=GROUP,
     priority=20,
     block=True,
 ).handle()
 async def _(
-    bot: Onebotv11Bot,
     matcher: Matcher,
     event: GroupMessageEvent,
-    cmd_arg: Message = CommandArg(),
 ):
-    all_member: list[dict] = await bot.get_group_member_list(group_id=event.group_id)
-    roll_num = cmd_arg.extract_plain_text().strip()
-    roll_num = int(roll_num) if roll_num.isdigit() else 1
-    result = random.sample(all_member, roll_num)
-    roll_result = ""
-    for member in result:
-        card = member["card"] if member["card"] is None else member["nickname"]
-        uin = member["user_id"]
-        roll_result += f"\n{card} ({uin})"
-    await matcher.send(f"随机抽取{roll_num}人：\n" + roll_result)
+    strick_url = None
+    if event.reply:
+        original_message = event.reply.message
+    else:
+        original_message = event.message
+    for seg in original_message:
+        if seg.type == "image":
+            strick_url = str(seg.data["url"]).replace("https://", "http://")
+
+    # 没有获取到表情，请求输入
+    if not strick_url:
+        await matcher.reject("请发送你想要保存的表情:")
+
+    if "gxh.vip.qq.com" in strick_url:
+        strick_url_png = strick_url.replace("raw300.gif", "300x300.png")
+        http_code = httpx.get(strick_url_png).status_code
+        if http_code != 404:
+            strick_url = strick_url_png
+
+    # 发送图片
+    content = MessageSegment.image(strick_url, type_=0)
+    await matcher.send(content + "原始链接：" + strick_url)

@@ -1,3 +1,4 @@
+import hashlib
 import json
 import math
 import os
@@ -35,6 +36,13 @@ async def download_url(url: str, max_retry: int = 3) -> bytes:
 
 
 async def save_download(url: str, module: str, save_file_name: str) -> pathlib.Path:
+    """
+    下载文件
+    :param url: str
+    :param module: str
+    :param save_file_name: str
+    :return: pathlib.Path
+    """
     if not os.path.exists(LOCAL_TMP_DIR.joinpath(module)):
         os.makedirs(LOCAL_TMP_DIR.joinpath(module))
     save_dir = LOCAL_TMP_DIR.joinpath(module).joinpath(save_file_name)
@@ -53,7 +61,7 @@ async def download_avatar(uid: str) -> bytes:
     """
     url = f"http://q1.qlogo.cn/g?b=qq&nk={uid}&s=640"
     data = await download_url(url)
-    if not data:
+    if not data or hashlib.md5(data).hexdigest() == "acef72340ac0e914090bd35799f5594e":
         url = f"http://q1.qlogo.cn/g?b=qq&nk={uid}&s=100"
         data = await download_url(url)
     return data
@@ -82,6 +90,11 @@ def AtSB(data: str) -> Union[list[str], list[int], list]:
 
 
 def convert_size(size_bytes: int) -> str:
+    """
+    字节转换为可读大小
+    :param size_bytes: int
+    :return: str
+    """
     if size_bytes == 0:
         return "0B"
     size_name = ("KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
