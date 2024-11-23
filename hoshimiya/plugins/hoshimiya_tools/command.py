@@ -151,7 +151,7 @@ async def _(
     if "gxh.vip.qq.com" in strick_url:
         strick_url_png = strick_url.replace("raw300.gif", "300x300.png")
         http_code = httpx.get(strick_url_png).status_code
-        if http_code != 404:
+        if http_code not in [400, 599]:
             strick_url = strick_url_png
 
     # 发送图片
