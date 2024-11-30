@@ -18,8 +18,6 @@ superusers = get_driver().config.superusers
 su = list(superusers)[0]
 
 feedback_cooldown = hoshimiya_feedback_config.feedback_cooldown
-
-
 LAST_SEND_TIME: int = 0
 
 feedback = on_command(
@@ -37,12 +35,12 @@ async def handle_feedback(
 ):
     now = int(time.time())
     if (now - LAST_SEND_TIME) < feedback_cooldown:
-        await matcher.finish(
-            f"该功能全局冷却中：剩余{feedback_cooldown - now + LAST_SEND_TIME}秒"
-        )
+        remaining_time = feedback_cooldown - (now - LAST_SEND_TIME)
+        await matcher.finish(f"该功能全局冷却中：剩余{remaining_time}秒")
+
     message = cmd_arg.extract_plain_text().strip()
     if message:
-        state.update({"message": message})
+        state["message"] = message
 
 
 @feedback.got("message", prompt="请输入需要发送的内容：")
@@ -54,28 +52,27 @@ async def handle_send_feedback(
 ):
     global LAST_SEND_TIME
     qid = event.user_id
-    base_message = f"收到来自{qid}的消息：\n"
-    message = base_message + message.strip()
-    await bot.send_private_msg(user_id=su, message=message)
-    LAST_SEND_TIME = int(time.time())
-    await matcher.finish("消息发送成功")
+    message_content = f"收到来自{qid}的消息：\n{message.strip()}"
+
+    try:
+        await bot.send_private_msg(user_id=su, message=message_content)
+        LAST_SEND_TIME = int(time.time())
+        await matcher.finish("消息发送成功")
+    except Exception:
+        await matcher.finish("消息发送失败，请稍后再试。")
 
 
 @on_command(
     "avatar", aliases={"头像"}, permission=GROUP, priority=20, block=True
 ).handle()
 async def handle_download_avatar(
-    matcher: Matcher,
-    event: GroupMessageEvent,
-    cmd_arg: Message = CommandArg(),
+    matcher: Matcher, event: GroupMessageEvent, cmd_arg: Message = CommandArg()
 ):
     message = cmd_arg.extract_plain_text().strip().split()
     sb = AtSB(event.model_dump_json())
-    for item in message:
-        if item.isdigit():
-            sb.append(item)
-    sb = list(map(lambda x: str(x), sb))
-    sb = list(set(sb))
+    sb.extend(item for item in message if item.isdigit())
+    sb = list(set(map(str, sb)))
+
     if sb and "all" not in sb:
         for uin in sb:
             avatar = await download_avatar(uin)
@@ -85,37 +82,30 @@ async def handle_download_avatar(
 
 
 @on_command(
-    "reversegif",
-    aliases={"倒放"},
-    permission=GROUP,
-    priority=20,
-    block=True,
+    "reversegif", aliases={"倒放"}, permission=GROUP, priority=20, block=True
 ).handle()
-async def handle_reverse_gif(
-    matcher: Matcher,
-    event: GroupMessageEvent,
-) -> None:
-    msg_images = None
-    if ReverseGifLock.locker("status") is True:
+async def handle_reverse_gif(matcher: Matcher, event: GroupMessageEvent) -> None:
+    if ReverseGifLock.locker("status"):
         await matcher.finish("后台正在处理其他图像, 请稍后再试")
-    # 首先处理消息中的图片
-    if event.reply:
-        original_message = event.reply.message
-    else:
-        original_message = event.message
-    for seg in original_message:
-        if seg.type == "image":
-            msg_images = str(seg.data["url"]).replace("https://", "http://")
 
-    # 没有获取到图像，请求输入
+    original_message = event.reply.message if event.reply else event.message
+    msg_images = next(
+        (
+            str(seg.data["url"]).replace("https://", "http://")
+            for seg in original_message
+            if seg.type == "image"
+        ),
+        None,
+    )
+
     if not msg_images:
         await matcher.reject("请发送你想要倒放的GIF图片:")
 
-    # 处理倒放
+    await matcher.send("图像处理中，这可能需要几分钟")
+
     try:
-        await matcher.send("图像处理中，这可能需要几分钟")
         source_image = await ReverseGif(url=msg_images)
-        if not source_image is None:
+        if source_image:
             await matcher.send(MessageSegment.image(source_image))
         else:
             await matcher.send("传入图像过大，拒绝处理")
@@ -125,26 +115,19 @@ async def handle_reverse_gif(
 
 
 @on_command(
-    cmd="save",
-    aliases={"保存"},
-    permission=GROUP,
-    priority=20,
-    block=True,
+    cmd="save", aliases={"保存"}, permission=GROUP, priority=20, block=True
 ).handle()
-async def _(
-    matcher: Matcher,
-    event: GroupMessageEvent,
-):
-    strick_url = None
-    if event.reply:
-        original_message = event.reply.message
-    else:
-        original_message = event.message
-    for seg in original_message:
-        if seg.type == "image":
-            strick_url = str(seg.data["url"]).replace("https://", "http://")
+async def handle_save(matcher: Matcher, event: GroupMessageEvent):
+    original_message = event.reply.message if event.reply else event.message
+    strick_url = next(
+        (
+            str(seg.data["url"]).replace("https://", "http://")
+            for seg in original_message
+            if seg.type == "image"
+        ),
+        None,
+    )
 
-    # 没有获取到表情，请求输入
     if not strick_url:
         await matcher.reject("请发送你想要保存的表情:")
 
@@ -154,6 +137,5 @@ async def _(
         if http_code not in [400, 599]:
             strick_url = strick_url_png
 
-    # 发送图片
     content = MessageSegment.image(strick_url, type_=0)
     await matcher.send(content + "原始链接：" + strick_url)

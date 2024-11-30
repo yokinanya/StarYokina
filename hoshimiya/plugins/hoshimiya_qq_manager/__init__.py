@@ -28,7 +28,7 @@ ban = on_command(
 
 
 @ban.handle()
-async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
+async def _(matcher: Matcher, event: GroupMessageEvent):
     """
     #禁言 @user 禁言
     """

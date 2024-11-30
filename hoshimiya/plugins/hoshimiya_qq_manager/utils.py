@@ -7,7 +7,7 @@
 # @Software: PyCharm
 import json
 import random
-from typing import Optional, Union
+from typing import Optional
 
 import nonebot
 from nonebot import get_driver, logger
@@ -18,29 +18,6 @@ from .config import qqmanager_plugin_config
 
 su = get_driver().config.superusers
 cb_notice = qqmanager_plugin_config.callback_notice
-
-
-def At(data: str) -> Union[list[str], list[int], list]:
-    """
-    检测at了谁，返回[qq, qq, qq,...]
-    包含全体成员直接返回['all']
-    如果没有at任何人，返回[]
-    :param data: event.json
-    :return: list
-    """
-    try:
-        qq_list = []
-        data = json.loads(data)
-        for msg in data['message']:
-            if msg['type'] == 'at':
-                if 'all' not in str(msg):
-                    qq_list.append(int(msg['data']['qq']))
-                else:
-                    return ['all']
-        return qq_list
-    except KeyError:
-        return []
-
 
 def MsgText(data: str):
     """
