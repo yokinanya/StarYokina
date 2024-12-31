@@ -34,6 +34,7 @@ if driver.config.model_dump().get('onebot_access_token'):
 # nonebot.load_builtin_plugins("echo")  # 内置插件
 # nonebot.load_plugin("thirdparty_plugin")  # 第三方插件
 nonebot.load_plugins("hoshimiya\plugins")  # 本地插件
+nonebot.load_plugins("test\plugins")
 # nonebot.load_from_toml("pyproject.toml")
 
 if __name__ == "__main__":

@@ -91,8 +91,6 @@ async def _(matcher: Matcher, event: GroupMessageEvent):
 async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
     gid = str(event.group_id)
     qid = str(event.user_id)
-    if qid in ["1099332511", "3872394754"]:
-        await matcher.finish("你已经有老婆了，要好好对待她哦~", at_sender=True)
 
     gconfig = wifeSettings(gid)
     gconfig.getConfig()
@@ -159,12 +157,14 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
 async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
     gid = str(event.group_id)
     qid = str(event.user_id)
-    if qid in ["1099332511", "3872394754"]:
-        await matcher.finish("你已经有老婆了，要好好对待她哦~", at_sender=True)
     gconfig = wifeSettings(gid)
     gconfig.getConfig()
     limit_times = gconfig.limit_times
     allow_change_waifu = gconfig.allow_change_wife
+
+    date = datetime.date.today().strftime("%m%d")
+    if date in ["0214","0512"]:
+        allow_change_waifu = False
 
     be_wiifu = False
     today = str(datetime.date.today())
@@ -178,7 +178,7 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
     if _wife_id is None:
         await matcher.finish("换老婆前请先娶个老婆哦，渣男", at_sender=True)
     if not allow_change_waifu:
-        await matcher.finish("请专一的对待自己的老婆哦", at_sender=True)
+        await matcher.finish("你今天已经有老婆了，还想娶小妾啊？爪巴，花心大萝卜", at_sender=True)
 
     old_waifu_id = _wife_id
     old_times = grecord.times
