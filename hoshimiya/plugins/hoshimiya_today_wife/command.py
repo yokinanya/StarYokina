@@ -117,9 +117,7 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
         # 如果用户在今天无老婆记录，随机从群友中抓取一位作为老婆
         all_member = await bot.get_group_member_list(group_id=gid)
         id_set = (
-            set(i["user_id"] for i in all_member)
-            - set(i for i in grecord.get_allwife())
-            - ban_id
+            set(i["user_id"] for i in all_member) - set(grecord.get_allwife()) - ban_id
         )
         id_set.discard(int(qid))
         if id_set:
@@ -163,7 +161,7 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
     allow_change_waifu = gconfig.allow_change_wife
 
     date = datetime.date.today().strftime("%m%d")
-    if date in ["0214","0512"]:
+    if date in ["0214", "0512"]:
         allow_change_waifu = False
 
     be_wiifu = False
@@ -178,7 +176,9 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
     if _wife_id is None:
         await matcher.finish("换老婆前请先娶个老婆哦，渣男", at_sender=True)
     if not allow_change_waifu:
-        await matcher.finish("你今天已经有老婆了，还想娶小妾啊？爪巴，花心大萝卜", at_sender=True)
+        await matcher.finish(
+            "你今天已经有老婆了，还想娶小妾啊？爪巴，花心大萝卜", at_sender=True
+        )
 
     old_waifu_id = _wife_id
     old_times = grecord.times
@@ -192,9 +192,7 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
     else:
         all_member: list = await bot.get_group_member_list(group_id=gid)
         id_set = (
-            set(i["user_id"] for i in all_member)
-            - set(i for i in grecord.get_allwife())
-            - ban_id
+            set(i["user_id"] for i in all_member) - set(grecord.get_allwife()) - ban_id
         )
         id_set.discard(int(qid))
         id_set.discard(old_waifu_id)

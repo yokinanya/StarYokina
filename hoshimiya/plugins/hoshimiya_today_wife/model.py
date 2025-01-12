@@ -33,7 +33,7 @@ class wifeRecord:
             self.qid = str(data[0][0])
             self._wife_id = int(data[0][1])
             self._times = int(data[0][2])
-            self.date = str(data[0][3])
+            self._date = str(data[0][3])
         return self._wife_id
 
     def get_bewife(self) -> Optional[int]:
@@ -51,11 +51,11 @@ class wifeRecord:
             self._date = data[0][3]
             return self.qid
 
-    def get_allwife(self) -> tuple:
+    def get_allwife(self) -> list:
         db = SQLiteDB(plugin_name="today_wife")
-        data = db.execute(f"SELECT wife_id FROM {"group_" + self.gid}")
+        data = db.execute(f"SELECT wife_id FROM {"group_" + self.gid} WHERE wife_id!= 0")
         db.close()
-        return data
+        return [row[0] for row in data]
 
     def check_date(self) -> bool:
         db = SQLiteDB(plugin_name="today_wife")
