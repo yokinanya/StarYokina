@@ -51,7 +51,7 @@ async def banSb(gid: int, ban_list: list, time: int = -1):
             enable=True
         )
     else:
-        if time is -1:
+        if time is -1 or time is None:
             time = random.randint(qqmanager_plugin_config.ban_rand_time_min, qqmanager_plugin_config.ban_rand_time_max)
         for qq in ban_list:
             if int(qq) in su or str(qq) in su:
