@@ -94,43 +94,46 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
 
     gconfig = wifeSettings(gid)
     gconfig.getConfig()
-    is_first: bool  # 是否已经存在老婆标记
-    wife_id: int  # 老婆id
+
+    # 初始化变量
+    is_first = False
+    be_wife = False
+    wife_id = 0
     today = str(datetime.date.today())
 
     grecord = wifeRecord(gid, qid, date=today)
-    # 如果不存在今天的记录，清空本群记录字典，并添加今天的记录，保存标记置为真
     grecord.check_date()
     bewife_id = grecord.get_bewife()
     _wife_id = grecord.get_wife()
+
     if bewife_id:
-        # 如果用户已经是群友的老婆
         is_first = False
-        be_wiifu = True
+        be_wife = True
         wife_id = bewife_id
-    elif _wife_id or _wife_id == 0:
-        # 如果用户已经有老婆记录
+    elif _wife_id is not None:  # 修正判断逻辑
         is_first = False
-        be_wiifu = False
+        be_wife = False
         wife_id = _wife_id
     else:
-        # 如果用户在今天无老婆记录，随机从群友中抓取一位作为老婆
-        all_member = await bot.get_group_member_list(group_id=gid)
-        id_set = (
-            set(i["user_id"] for i in all_member) - set(grecord.get_allwife()) - ban_id
-        )
-        id_set.discard(int(qid))
-        if id_set:
-            wife_id: int = random.choice(list(id_set))
-        else:
-            # 如果剩余群员列表为空，默认机器人作为老婆
-            wife_id: int = int(bot.self_id)
+        try:
+            all_member = await bot.get_group_member_list(group_id=gid)
+            # 使用生成器优化集合操作
+            existed_wives = set(grecord.get_allwife())
+            id_set = set(m["user_id"] for m in all_member) - existed_wives - ban_id
+            id_set.discard(int(qid))
 
-        is_first = True
-        be_wiifu = False
-        grecord.wife_id = wife_id
-        grecord.times = 0
-    if be_wiifu is False:
+            wife_id = random.choice(list(id_set)) if id_set else int(bot.self_id)
+        except Exception as e:
+            wife_id = int(bot.self_id)
+            is_first = False
+            be_wife = False
+        else:
+            is_first = True
+            be_wife = False
+            grecord.wife_id = wife_id
+            grecord.times = 0
+
+    if not be_wife:
         grecord.save()
 
     try:
@@ -138,11 +141,17 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
             group_id=int(gid), user_id=wife_id
         )
     except ActionFailed:
-        # 群员已经退群情况
         member_info = {}
-    message: Message = await construct_waifu_msg(
-        member_info, wife_id, int(bot.self_id), is_first, be_wiifu
-    )
+    except Exception as e:
+        member_info = {}
+
+    try:
+        message: Message = await construct_waifu_msg(
+            member_info, wife_id, int(bot.self_id), is_first, be_wife
+        )
+    except Exception as e:
+        message = Message("老婆信息生成失败，请稍后再试")
+
     await matcher.finish(message, at_sender=True)
 
 
@@ -159,62 +168,61 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
     gconfig.getConfig()
     limit_times = gconfig.limit_times
     allow_change_waifu = gconfig.allow_change_wife
+    bot_id = int(bot.self_id)  # 预计算机器人ID
 
-    date = datetime.date.today().strftime("%m%d")
-    if date in ["0214", "0512"]:
+    # 情人节禁止更换
+    if datetime.date.today().strftime("%m%d") == "0214":
         allow_change_waifu = False
 
-    be_wiifu = False
+    be_waifu = False  # 修正变量名拼写
     today = str(datetime.date.today())
     grecord = wifeRecord(gid, qid, date=today)
-    # 如果不存在今天的记录，清空本群记录字典，并添加今天的记录，保存标记置为真
     grecord.check_date()
 
-    bewife_id = grecord.get_bewife()
-    _wife_id = grecord.get_wife()
-
-    if _wife_id is None:
+    if (wife_id := grecord.get_wife()) is None:
         await matcher.finish("换老婆前请先娶个老婆哦，渣男", at_sender=True)
     if not allow_change_waifu:
         await matcher.finish(
             "你今天已经有老婆了，还想娶小妾啊？爪巴，花心大萝卜", at_sender=True
         )
 
-    old_waifu_id = _wife_id
     old_times = grecord.times
-    if bewife_id:
-        # 如果用户已经是群友的老婆
+    if bewife_id := grecord.get_bewife():
         new_waifu_id = bewife_id
-        be_wiifu = True
-    elif old_times >= limit_times or old_waifu_id == int(bot.self_id):
+        be_waifu = True
+    elif old_times >= limit_times or wife_id == bot_id:
         new_waifu_id = 0
         old_times = limit_times
     else:
-        all_member: list = await bot.get_group_member_list(group_id=gid)
-        id_set = (
-            set(i["user_id"] for i in all_member) - set(grecord.get_allwife()) - ban_id
+        # 优化集合操作
+        members = await bot.get_group_member_list(group_id=int(gid))
+        exist_wives = set(grecord.get_allwife()) | {int(qid), wife_id, bot_id}
+        available_ids = (
+            {m["user_id"] for m in members}
+            - exist_wives
+            - (ban_id if isinstance(ban_id, set) else set())
         )
-        id_set.discard(int(qid))
-        id_set.discard(old_waifu_id)
-        if id_set:
-            new_waifu_id: int = random.choice(list(id_set))
-        else:
-            # 如果剩余群员列表为空，默认机器人作为老婆
-            new_waifu_id: int = int(bot.self_id)
 
+        new_waifu_id = random.choice(list(available_ids)) if available_ids else bot_id
+
+    # 处理特殊ID情况
+    if new_waifu_id == 0:
+        member_info = {}
+    else:
+        try:
+            member_info = await bot.get_group_member_info(
+                group_id=int(gid), user_id=new_waifu_id
+            )
+        except Exception:  # 扩展异常捕获范围
+            member_info = {}
+
+    # 更新记录
     grecord.wife_id = new_waifu_id
-    grecord.times = grecord.times + 1
-    if be_wiifu is False:
+    grecord.times += 1
+    if not be_waifu:
         grecord.save()
 
-    try:
-        member_info = await bot.get_group_member_info(
-            group_id=int(gid), user_id=new_waifu_id
-        )
-    except ActionFailed:
-        # 群员已经退群情况
-        member_info = {}
     message: Message = await construct_change_waifu_msg(
-        member_info, new_waifu_id, int(bot.self_id), old_times, limit_times, be_wiifu
+        member_info, new_waifu_id, bot_id, old_times, limit_times, be_waifu
     )
     await matcher.finish(message, at_sender=True)
