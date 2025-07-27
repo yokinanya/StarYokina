@@ -153,7 +153,8 @@ disable
 data.json
 nonebot_plugin_steam_info
 fonts
-\nbtest
+nbtest
 
+hoshimiya\plugins\vtuber_button
 
 # End of https://www.toptal.com/developers/gitignore/api/python
