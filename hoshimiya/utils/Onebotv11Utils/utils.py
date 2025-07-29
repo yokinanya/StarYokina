@@ -11,11 +11,19 @@ from nonebot import logger
 
 
 LOCAL_TMP_DIR = (
-    pathlib.Path(os.path.abspath(sys.path[0])).joinpath("hoshimiya").joinpath(".tmp")
+    pathlib.Path(os.path.abspath(sys.path[0])).joinpath(
+        "hoshimiya").joinpath(".tmp")
 )
-OMEGA_LOCAL_TMP_DIR = pathlib.Path(os.path.abspath(sys.path[0])).joinpath(".tmp")
+OMEGA_LOCAL_TMP_DIR = pathlib.Path(
+    os.path.abspath(sys.path[0])).joinpath(".tmp")
 if not os.path.exists(LOCAL_TMP_DIR):
     os.makedirs(LOCAL_TMP_DIR)
+LOCAL_DATA_DIR = (
+    pathlib.Path(os.path.abspath(sys.path[0])).joinpath(
+        "hoshimiya").joinpath("data")
+)
+if not os.path.exists(LOCAL_DATA_DIR):
+    os.makedirs(LOCAL_DATA_DIR)
 
 
 async def download_url(url: str, max_retry: int = 3) -> bytes:
@@ -32,7 +40,8 @@ async def download_url(url: str, max_retry: int = 3) -> bytes:
                     continue
                 return resp.content
             except Exception as e:
-                logger.error(f"Error downloading {url}, retry {i}/max_retry: {str(e)}")
+                logger.error(
+                    f"Error downloading {url}, retry {i}/max_retry: {str(e)}")
 
 
 async def save_download(url: str, module: str, save_file_name: str) -> pathlib.Path:
