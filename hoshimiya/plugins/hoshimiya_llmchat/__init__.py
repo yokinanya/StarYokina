@@ -45,7 +45,7 @@ async def startup() -> None:
     GroupConfig.load_from_file()
 
 
-@on_command(("ai", "AI", "Ai"), priority=10, block=True).handle()
+@on_command("ai", aliases={"AI", "Ai"}, priority=10, block=True).handle()
 async def handle_ai_chat(bot: Onebotv11Bot, matcher: Matcher, event: GroupMessageEvent, cmd_arg: Message = CommandArg()):
     gconfig = GroupConfig(event.group_id)
     msg: Message = event.get_message()
